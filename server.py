@@ -8,12 +8,8 @@ class ServerBase:
         self.buffer = buffer
         self.close()
 
-    def __del__(self):
-        self.close()
-
     def close(self) -> None:
         try:
-            print('Closing current connection.')
             self.socket.shutdown(socket.SHUT_RDWR)
             self.socket.close()
         except:
@@ -25,20 +21,29 @@ class ServerBase:
         self.socket.bind(address)
         self.socket.listen(1)
         print('Server started : ', address)
-        connection, client_address = self.socket.accept()
+        
+        try:
+            connection, client_address = self.socket.accept()
 
-        while True:
-            data = connection.recv(self.buffer)
-            data_str = data.decode('utf-8')
+            while True:
+                data = connection.recv(self.buffer)
+                data_str = data.decode('utf-8')
 
-            if data:
-                resp = self.respond(data_str)
-                connection.sendall(resp.encode('utf-8'))
-            else:
-                print('No data from ', client_address)
-                break
-
-        self.close()
+                if data:
+                    resp = self.respond(data_str)
+                    connection.sendall(resp.encode('utf-8'))
+                else:
+                    print('No data from ', client_address)
+                    break
+        except TimeoutError as e:
+            print(f"{e}: No connection was made to the sever")
+        except ConnectionResetError as e:
+            print(f'{e}: Connection has been reset.')
+        except BrokenPipeError as e:
+            print(f'{e}: Connection has been lost')
+        finally:
+            print('Closing current connection.')
+            self.close()
 
     def respond(self, message: str) -> str:
         return ""
@@ -48,11 +53,8 @@ class UnixServer(ServerBase):
     def __init__(self, path: str = 'server.sock'):
         self.server = path
         self.delete()
-        super().__init__(timeout = 60, buffer = 1024)
+        super().__init__(timeout = 30, buffer = 1024)
         super().accept(self.server, socket.AF_UNIX, socket.SOCK_STREAM, 0)
-
-    def __dell__(self):
-        self.delete()
 
     def delete(self):
         if os.path.exists(self.server):

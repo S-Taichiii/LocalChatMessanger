@@ -37,8 +37,10 @@ class ClientBase:
 
                 if flag:
                     break
-        except TimeoutError:
-            print('Socket timeout, ending listening for server messages')
+        except TimeoutError as e:
+            print(f'{e}: Socket timeout, ending listening for server messages')
+        except BrokenPipeError as e:
+            print(f'{e}: Connection to the server has been lost.')
 
         self.close()
 
@@ -53,7 +55,7 @@ class ClientBase:
         print(message)
 
 
-class UnixCliend(ClientBase):
+class UnixClient(ClientBase):
     def __init__(self, path: str= 'server.sock'):
         self.server = path
         super().__init__(timeout = 60, buffer = 1024)
@@ -61,4 +63,4 @@ class UnixCliend(ClientBase):
         super().send()
 
 if __name__ == '__main__':
-    UnixCliend()
+    UnixClient()
