@@ -8,7 +8,6 @@ class ClientBase:
         self.settimeout = timeout
         self.buffer = buffer
 
-
     def connect(self, address, family: int, type: int, proto: int):
         self.address = address
         self.socket = socket.socket(family, type, proto)

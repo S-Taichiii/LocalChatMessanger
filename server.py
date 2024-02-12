@@ -24,6 +24,7 @@ class ServerBase:
         
         try:
             connection, client_address = self.socket.accept()
+            print(f'Successfully connected with {client_address}')
 
             while True:
                 data = connection.recv(self.buffer)
@@ -33,7 +34,6 @@ class ServerBase:
                     resp = self.respond(data_str)
                     connection.sendall(resp.encode('utf-8'))
                 else:
-                    print('No data from ', client_address)
                     break
         except TimeoutError as e:
             print(f"{e}: No connection was made to the sever")
