@@ -1,8 +1,9 @@
 import os
 import socket
+from faker import Faker
 
 class ServerBase:
-    def __init__(self, timeout: int = 60, buffer: int = 1024):
+    def __init__(self, timeout=60, buffer=1024):
         self.socket = None
         self.timeout = timeout
         self.buffer = buffer
@@ -15,55 +16,56 @@ class ServerBase:
         except:
             pass
 
-    def accept(self, address, family: int, typ: int, proto: int) -> None:
-        self.socket = socket.socket(family, typ, proto)
+    def accept(self, address, family: int, type: int, proto: int):
+        self.socket = socket.socket(family, type, proto)
         self.socket.settimeout(self.timeout)
         self.socket.bind(address)
+        print('This server is wating for connecting with client.')
         self.socket.listen(1)
-        print('Server started : ', address)
-        
+
         try:
-            connection, client_address = self.socket.accept()
-            print(f'Successfully connected with {client_address}')
-
+            connection, _ = self.socket.accept()
+            print(f"Succesfully connected!!!")
+            
             while True:
-                data = connection.recv(self.buffer)
-                data_str = data.decode('utf-8')
+                m_recv = connection.recv(self.buffer).decode('utf-8')
 
-                if data:
-                    resp = self.respond(data_str)
+                if m_recv:
+                    resp = self.respond(m_recv)
                     connection.sendall(resp.encode('utf-8'))
                 else:
                     break
+
         except TimeoutError as e:
-            print(f"{e}: No connection was made to the sever")
-        except ConnectionResetError as e:
-            print(f'{e}: Connection has been reset.')
+            print(f'{e}')
         except BrokenPipeError as e:
-            print(f'{e}: Connection has been lost')
+            print(f'{e}')
+        except ConnectionResetError as e:
+            print(f'{e}')
         finally:
             print('Closing current connection.')
             self.close()
 
-    def respond(self, message: str) -> str:
+    def respond(self, message: str="") -> str:
         return ""
     
-
 class UnixServer(ServerBase):
     def __init__(self, path: str = 'server.sock'):
-        self.server = path
+        self.path = path
         self.delete()
-        super().__init__(timeout = 30, buffer = 1024)
-        super().accept(self.server, socket.AF_UNIX, socket.SOCK_STREAM, 0)
+        super().__init__()
+        super().accept(self.path, socket.AF_UNIX, socket.SOCK_STREAM, 0)
 
     def delete(self):
-        if os.path.exists(self.server):
-            os.remove(self.server)
+        if os.path.exists(self.path):
+            os.remove(self.path)
 
-    def respond(self, message: str) -> str:
-        print("received ----> ", message)
-        return 'Server accepted!!!'
+    def respond(self, message: str):
+        print(f'Input --------> {message}')
+        
+        fake = Faker()
+        resp = 'Server accepted!!! fake_name: {}'.format(fake.name())
+        return resp
     
-
 if __name__ == '__main__':
     UnixServer()
